@@ -25,7 +25,7 @@
      	* Alice计算k=Y’^x mod n
         * Bob计算k=Z’^y mod n
          * Carol计算k=X’^z mod n
-* 加解密的验证：利用python的pydes库进行DES加解密的验证。
+* 加解密的验证：利用Python的pydes库进行DES加解密的验证。
 
 #### 演示界面
 ![DH1](https://img-blog.csdnimg.cn/20200810150259930.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0NMYXJhbGkw,size_16,color_FFFFFF,t_70)
@@ -33,7 +33,7 @@
 ![DH2](https://img-blog.csdnimg.cn/20200810150341450.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0NMYXJhbGkw,size_16,color_FFFFFF,t_70)
 #### 遇到的问题
 1. javascript中大数溢出问题。
-解决办法：利用BigInt对象，但是要注意这里BigInt对象的除法运算的结果自动向下取整，和普通的javascript语法有所区别。
+解决办法：利用BigInt对象，但是要注意这里BigInt对象的除法运算的结果自动向下取整，和普通的JavaScript语法有所区别。
 
 2. 环境依赖
 解决办法：利用pipenv管理小组成员的python,django版本和pydes函数库
