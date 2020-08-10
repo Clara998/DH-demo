@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- head -->
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="//cdnjs.loli.net/ajax/libs/mdui/0.4.3/css/mdui.min.css">
+  <script src="//cdnjs.loli.net/ajax/libs/mdui/0.4.3/js/mdui.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>
+  <title>Document</title>
+</head>
+
+<!-- body -->
+
+<body class="mdui-center mdui-theme-primary-indigo mdui-theme-accent-pink light-font">
+  <div class="mdui-toolbar mdui-color-theme">
+    <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">menu</i></a>
+    <span class="mdui-typo-title">基于Diffie-Hellman的三方密钥交换算法</span>
+    <div class="mdui-toolbar-spacer"></div>
+    <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">search</i></a>
+    <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">refresh</i></a>
+    <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">more_vert</i></a>
+  </div>
+
+  <div style="display: flex; justify-content:space-between; width: 800px;" class="mdui-valign mdui-center">
+    <button id="gen-p" class="mdui-btn mdui-color-theme-accent mdui-ripple mdui-btn-raised">生成素数p</button>
+    <div class="mdui-textfield">
+      <input id="p" class="mdui-textfield-input" type="text" placeholder="素数" />
+    </div>
+    <button id="gen-a" class="mdui-btn mdui-color-theme-accent mdui-ripple mdui-btn-raised">生成p的一个原根a</button>
+    <div class="mdui-textfield">
+      <input id="a" class="mdui-textfield-input" type="text" placeholder="原根" />
+    </div>
+  </div>
+
+
+
+  <div class="mdui-divider"></div>
+  <div class="mdui-container">
+    <table class="mdui-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Alice</th>
+          <th>Bob</th>
+          <th>Carol</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <button id="gen-pri-key" class="mdui-btn mdui-color-theme-accent mdui-ripple mdui-btn-raised">生成私钥</button>
+          </td>
+          <td id="xa">/</td>
+          <td id="xb">/</td>
+          <td id="xc">/</td>
+        </tr>
+        <tr>
+          <td>
+            <button id="first" class="mdui-btn mdui-color-theme-accent mdui-ripple mdui-btn-raised">第一轮密钥分发</button>
+          </td>
+          <td id="y1a">/</td>
+          <td id="y1b">/</td>
+          <td id="y1c">/</td>
+        </tr>
+        <tr>
+          <td>
+            <button id="second" class="mdui-btn mdui-color-theme-accent mdui-ripple mdui-btn-raised">第二轮密钥分发</button>
+          </td>
+          <td id="y2a">/</td>
+          <td id="y2b">/</td>
+          <td id="y2c">/</td>
+        </tr>
+       
+        <tr>
+          <td>
+            <button id="key" class="mdui-btn mdui-color-theme-accent mdui-ripple mdui-btn-raised">共享密钥</button>
+          </td>
+          <td id="keya">/</td>
+          <td id="keyb">/</td>
+          <td id="keyc">/</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display: flex; justify-content:space-between; width: 800px;" class="mdui-valign mdui-center">
+    <button id="encode" class="mdui-btn mdui-color-theme-accent mdui-ripple mdui-btn-raised">DES加密</button>
+    <div class="mdui-textfield">
+      <textarea id="plaintext" class="mdui-textfield-input" type="text" placeholder="在此输出明文" ></textarea>
+    </div>
+    <button id="decode" class="mdui-btn mdui-color-theme-accent mdui-ripple mdui-btn-raised">DES解密</button>
+    <div class="mdui-textfield">
+      <textarea id="ciphertext" class="mdui-textfield-input" type="text" placeholder="在此输出密文" ></textarea>
+    </div>
+  </div>
+
+
+  <script>
+    function quickPowMod(x, y, p) {
+      ret = BigInt(1);
+      x = BigInt(x);
+      y = BigInt(y);
+      p = BigInt(p);
+      while (y > 0n) {
+        if (y % 2n == 1n) {
+          ret = ret * x % p;
+        }
+        x = (x * x) % p;
+        y = y / 2n;
+      }
+      return ret;
+    }
+
+    function genP() {
+      var url = "{% url 'dh:gen_p' %}";
+      var data = {};
+      $.post(url, data, (res) => $('#p').attr('value', res.p));
+
+    }
+    $("#gen-p").click(genP);
+
+    function genA() {
+      var url = "{% url 'dh:gen_a' %}";
+      var p = $('#p').attr('value');
+      var data = {
+        p: p
+      };
+      $.post(url, data, (res) => {
+        $('#a').attr('value', res.a)
+      });
+    }
+    $("#gen-a").click(genA);
+
+    function randomNum(minNum, maxNum) {
+      switch (arguments.length) {
+        case 1:
+          return parseInt(Math.random() * minNum + 1, 10);
+          break;
+        case 2:
+          return parseInt(Math.random() * (maxNum - minNum + 1) + minNum, 10);
+          break;
+        default:
+          return 0;
+          break;
+      }
+    }
+
+    function genPriKey() {
+      var p = $('#p').attr('value');
+      return randomNum(1, p);
+    }
+
+    function showPrivateKey() {
+      $('#xa').html(genPriKey());
+      $('#xb').html(genPriKey());
+      $('#xc').html(genPriKey());
+    }
+    $("#gen-pri-key").click(showPrivateKey);
+
+    function genFirstDistribution(x) {
+      var p = $('#p').attr('value');
+      var a = $('#a').attr('value');
+      return quickPowMod(a,x,p);
+      //return (a**x)%p;
+    }
+
+    function showFirstDistribution() {
+      $('#y1a').html(genFirstDistribution($('#xa').html()));
+      $('#y1b').html(genFirstDistribution($('#xb').html()));
+      $('#y1c').html(genFirstDistribution($('#xc').html()));
+    }
+    $("#first").click(showFirstDistribution);
+
+    function genSecondDistribution(x,y) {
+      var p = $('#p').attr('value');
+      return quickPowMod(y,x,p);
+      //return (y**x)%p;
+    }
+
+    function showSecondDistribution() {
+      $('#y2a').html(genSecondDistribution($('#xa').html(),$('#y1c').html()));
+      $('#y2b').html(genSecondDistribution($('#xb').html(),$('#y1a').html()));
+      $('#y2c').html(genSecondDistribution($('#xc').html(),$('#y1b').html()));
+    }
+    $("#second").click(showSecondDistribution);
+
+    function genKey(pub, x) {
+      var p = $('#p').attr('value');
+      return quickPowMod(pub,x,p);
+    }
+    function showKey() {
+      $('#keya').html(genKey($('#y2c').html(),$('#xa').html()));
+      $('#keyb').html(genKey($('#y2a').html(),$('#xb').html()));
+      $('#keyc').html(genKey($('#y2b').html(),$('#xc').html()));
+    }
+    $("#key").click(showKey);
+
+    function showEncode() {
+      var url = "{% url 'dh:show_encode' %}";
+      var plain = $('#plaintext').val();
+      console.log({'plain':plain});
+      var key = $('#keya').html();
+      console.log({'key':key});
+      var data = {
+        plain:plain,
+        key:key
+      };
+      $.post(url, data,
+        (res) => {
+        $('#ciphertext').val(res.encode)
+      });
+    }
+    $("#encode").click(showEncode);
+
+    function showDecode() {
+      var url = "{% url 'dh:show_decode' %}";
+      var cipher = $('#ciphertext').val();
+      var key = $('#keya').html();
+      console.log({'cipher':cipher});
+      console.log({'key':key});
+      var data = {
+        cipher:cipher,
+        key:key
+      };
+      $.post(url, data, 
+        (res) => {
+          $('#plaintext').val(res.dec)
+      });
+    }
+    $("#decode").click(showDecode);
+  </script>
+</body>
+
+
+</html>
